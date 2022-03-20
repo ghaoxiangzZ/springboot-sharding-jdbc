@@ -4,12 +4,11 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.haoxiang.sharding.mapper.ConfigRepository;
+import com.haoxiang.sharding.mapper.OrderOldRepository;
 import com.haoxiang.sharding.mapper.OrderItemRepository;
 import com.haoxiang.sharding.mapper.OrderRepository;
-import com.haoxiang.sharding.model.TConfig;
-import com.haoxiang.sharding.model.TOrder;
-import com.haoxiang.sharding.model.TOrderDto;
-import com.haoxiang.sharding.model.TOrderItem;
+import com.haoxiang.sharding.model.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,14 +18,18 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 
+@Slf4j
 @Controller
 @RequestMapping
 public class TestController {
 
     @Resource
     private OrderRepository orderRepository;
+    @Resource
+    private OrderOldRepository orderOldRepository;
     @Resource
     private OrderItemRepository orderItemRepository;
     @Resource
@@ -66,7 +69,13 @@ public class TestController {
     @GetMapping(value = "/getOneOrder")
     @ResponseBody
     public String getOne(Long orderId) {
-        return JSON.toJSONString(orderRepository.selectOne(Wrappers.<TOrder>lambdaQuery().eq(TOrder::getOrderId, orderId)));
+        TOrder orderNew = orderRepository.selectOne(Wrappers.<TOrder>lambdaQuery().eq(TOrder::getOrderId, orderId));
+        if (Objects.isNull(orderNew)) {
+            log.info("查询新表");
+            TOrderOld oldOrder = orderOldRepository.selectOne(Wrappers.<TOrderOld>lambdaQuery().eq(TOrderOld::getOrderId, orderId));
+            return JSON.toJSONString(oldOrder);
+        }
+        return JSON.toJSONString(orderNew);
     }
 
 
