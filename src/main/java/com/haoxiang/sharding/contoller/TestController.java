@@ -3,10 +3,7 @@ package com.haoxiang.sharding.contoller;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.haoxiang.sharding.mapper.ConfigRepository;
-import com.haoxiang.sharding.mapper.OrderOldRepository;
-import com.haoxiang.sharding.mapper.OrderItemRepository;
-import com.haoxiang.sharding.mapper.OrderRepository;
+import com.haoxiang.sharding.mapper.*;
 import com.haoxiang.sharding.model.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
@@ -33,23 +30,37 @@ public class TestController {
     @Resource
     private OrderItemRepository orderItemRepository;
     @Resource
+    private OrderItemOldRepository orderItemOldRepository;
+    @Resource
     private ConfigRepository configRepository;
 
     @GetMapping(value = "/insertOrder")
     @ResponseBody
     public String insertOrder() {
         for (int i = 0; i < 50; i++) {
+            int val = i * 2;
+            TOrderOld orderOld = new TOrderOld();
+            orderOld.setOrderNo("B000" + val);
+            orderOld.setOrderId(ThreadLocalRandom.current().nextLong(2000));
+            orderOld.setCreateName("订单 " + val);
+            orderOld.setPrice(new BigDecimal(ThreadLocalRandom.current().nextInt(2000)));
+            orderOldRepository.insert(orderOld);
+            /*TOrderItemOld orderItemOld = new TOrderItemOld();
+            orderItemOld.setOrderId(orderOld.getOrderId());
+            orderItemOld.setItemName("服务项目" + val);
+            orderItemOld.setPrice(orderOld.getPrice());
+            orderItemOldRepository.insert(orderItemOld);*/
+            // 假装是异步处理，不在一个事务
             TOrder order = new TOrder();
-            order.setOrderNo("A000" + i);
-            order.setCreateName("订单 " + i);
+            order.setOrderNo("B000" + val);
+            order.setCreateName("订单 " + val);
             order.setPrice(new BigDecimal(ThreadLocalRandom.current().nextInt(2000)));
             orderRepository.insert(order);
-            order = orderRepository.selectOne(Wrappers.<TOrder>lambdaQuery().eq(TOrder::getOrderNo, "A000" + i));
-            TOrderItem orderItem = new TOrderItem();
+           /* TOrderItem orderItem = new TOrderItem();
             orderItem.setOrderId(order.getOrderId());
-            orderItem.setItemName("服务项目" + i);
+            orderItem.setItemName("服务项目" + val);
             orderItem.setPrice(order.getPrice());
-            orderItemRepository.insert(orderItem);
+            orderItemRepository.insert(orderItem);*/
         }
         return "success";
     }
